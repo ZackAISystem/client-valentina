@@ -1,4 +1,3 @@
-cat > layouts/_default/home.html << 'EOF'
 {{ define "main" }}
 <main>
   {{ $page := . }}
@@ -6,7 +5,6 @@ cat > layouts/_default/home.html << 'EOF'
   {{/* 1) project_key берём из front matter главной (_index.md) */}}
   {{ $key := $page.Params.project_key | default "" }}
   {{ if eq $key "" }}
-    {{/* запасной вариант */}}
     {{ $key = "unknown" }}
   {{ end }}
 
@@ -14,10 +12,9 @@ cat > layouts/_default/home.html << 'EOF'
   {{ $project := index site.Data.projects $key }}
   {{ if not $project }}{{ $project = dict }}{{ end }}
 
-  {{/* 3) блоки: берём из front matter */}}
+  {{/* 3) блоки */}}
   {{ $blocks := $page.Params.blocks }}
   {{ if not $blocks }}
-    {{/* fallback порядок, если blocks вдруг пустые */}}
     {{ $blocks = slice
       (dict "type" "header"          "block_variant" "header_default")
       (dict "type" "hero"            "block_variant" "hero_default")
@@ -32,7 +29,6 @@ cat > layouts/_default/home.html << 'EOF'
     }}
   {{ end }}
 
-  {{/* 4) рендерим блоки */}}
   {{ range $index, $block := $blocks }}
     {{ $t := (or $block.type $block.block_name) }}
     {{ if $t }}
@@ -48,4 +44,3 @@ cat > layouts/_default/home.html << 'EOF'
   {{ end }}
 </main>
 {{ end }}
-EOF
