@@ -13,12 +13,16 @@ DATA_DIR="$ROOT/data/projects"
 IMAGES_DIR="$ROOT/static/images/projects"
 QR_DIR="$ROOT/static/qr"
 
-# Cloudflare Pages обычно выставляет CF_PAGES=1
-IS_CF_PAGES="${CF_PAGES:-}"
+# Cloudflare Pages env detection
+IS_CF_PAGES="${CF_PAGES_BRANCH:-${CF_PAGES:-}}"
 
 TMP_DIR=""
+
+############################################
+# ========== LOCAL MODE ===================
+############################################
 if [ -z "$IS_CF_PAGES" ]; then
-  # ЛОКАЛЬНО: бэкап + восстановление, чтобы у тебя ничего не “пропало”
+
   TMP_DIR="$(mktemp -d)"
   echo "==> Local mode: backup to $TMP_DIR"
 
@@ -32,6 +36,7 @@ if [ -z "$IS_CF_PAGES" ]; then
     mv "$TMP_DIR/qr" "$QR_DIR" 2>/dev/null || true
     rm -rf "$TMP_DIR"
   }
+
   trap cleanup EXIT
 
   mv "$CONTENT_DIR" "$TMP_DIR/content"
@@ -41,7 +46,7 @@ if [ -z "$IS_CF_PAGES" ]; then
 
   mkdir -p "$CONTENT_DIR" "$DATA_DIR" "$IMAGES_DIR" "$QR_DIR"
 
-  # --- content/<slug>/ ---
+  # --- CONTENT ---
   if [ -d "$TMP_DIR/content/$SITE_SLUG" ]; then
     cp -R "$TMP_DIR/content/$SITE_SLUG" "$CONTENT_DIR/$SITE_SLUG"
   else
@@ -49,7 +54,12 @@ if [ -z "$IS_CF_PAGES" ]; then
     exit 1
   fi
 
-  # --- data/projects/<slug>.json ---
+  # make selected project homepage
+  if [ -f "$CONTENT_DIR/$SITE_SLUG/index.md" ]; then
+    cp "$CONTENT_DIR/$SITE_SLUG/index.md" "$CONTENT_DIR/_index.md"
+  fi
+
+  # --- DATA ---
   if [ -f "$TMP_DIR/projects/$SITE_SLUG.json" ]; then
     cp "$TMP_DIR/projects/$SITE_SLUG.json" "$DATA_DIR/$SITE_SLUG.json"
   else
@@ -57,48 +67,56 @@ if [ -z "$IS_CF_PAGES" ]; then
     exit 1
   fi
 
-  # --- images/projects/<slug>/ ---
+  # --- IMAGES ---
   if [ -d "$TMP_DIR/images_projects/$SITE_SLUG" ]; then
     cp -R "$TMP_DIR/images_projects/$SITE_SLUG" "$IMAGES_DIR/$SITE_SLUG"
   else
-    echo "WARN: static/images/projects/$SITE_SLUG not found"
+    echo "WARN: images not found for $SITE_SLUG"
   fi
 
-  # --- qr/<slug>-qr.png (ТОЛЬКО ОДИН) ---
+  # --- QR ---
   QR_FILE="$TMP_DIR/qr/${SITE_SLUG}-qr.png"
   if [ -f "$QR_FILE" ]; then
     cp "$QR_FILE" "$QR_DIR/${SITE_SLUG}-qr.png"
   else
     echo "ERROR: QR not found: static/qr/${SITE_SLUG}-qr.png"
-    echo "       Check filename in static/qr/ (it must match <slug>-qr.png)"
     exit 1
   fi
 
+############################################
+# ========== CLOUDFLARE MODE ==============
+############################################
 else
-  # CLOUDFLARE: среда одноразовая, можно резать без бэкапа
-  echo "==> Cloudflare mode: shrink workspace for single-site build"
 
-  # В Cloudflare репо уже есть, поэтому можем просто удалить лишнее
-  # content: оставить только одну папку
+  echo "==> Cloudflare mode: shrinking workspace"
+
+  # content: keep only one project folder
   find content -mindepth 1 -maxdepth 1 -type d ! -name "$SITE_SLUG" -exec rm -rf {} +
+
   if [ ! -d "content/$SITE_SLUG" ]; then
     echo "ERROR: content/$SITE_SLUG not found"
     exit 1
   fi
 
-  # data/projects: оставить только один json
+  # make selected project homepage
+  if [ -f "content/$SITE_SLUG/index.md" ]; then
+    cp "content/$SITE_SLUG/index.md" "content/_index.md"
+  fi
+
+  # data: keep only one json
   find data/projects -type f -name "*.json" ! -name "${SITE_SLUG}.json" -delete
+
   if [ ! -f "data/projects/${SITE_SLUG}.json" ]; then
     echo "ERROR: data/projects/${SITE_SLUG}.json not found"
     exit 1
   fi
 
-  # images/projects: оставить только одну папку
+  # images: keep only one project folder
   if [ -d "static/images/projects" ]; then
     find static/images/projects -mindepth 1 -maxdepth 1 -type d ! -name "$SITE_SLUG" -exec rm -rf {} +
   fi
 
-  # qr: оставить только один файл <slug>-qr.png
+  # qr: keep only one file
   if [ -d "static/qr" ]; then
     find static/qr -type f -name "*.png" ! -name "${SITE_SLUG}-qr.png" -delete
     if [ ! -f "static/qr/${SITE_SLUG}-qr.png" ]; then
@@ -109,8 +127,10 @@ else
     echo "ERROR: static/qr folder not found"
     exit 1
   fi
+
 fi
 
+############################################
 echo "==> Running hugo --minify"
 hugo --minify
 
