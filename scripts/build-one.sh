@@ -13,7 +13,7 @@ DATA_DIR="$ROOT/data/projects"
 IMAGES_DIR="$ROOT/static/images/projects"
 QR_DIR="$ROOT/static/qr"
 
-# Cloudflare Pages env detection
+# Cloudflare Pages env detection (CF_PAGES is common; CF_PAGES_BRANCH exists too)
 IS_CF_PAGES="${CF_PAGES_BRANCH:-${CF_PAGES:-}}"
 
 TMP_DIR=""
@@ -36,17 +36,18 @@ if [ -z "$IS_CF_PAGES" ]; then
     mv "$TMP_DIR/qr" "$QR_DIR" 2>/dev/null || true
     rm -rf "$TMP_DIR"
   }
-
   trap cleanup EXIT
 
+  # Move originals into backup
   mv "$CONTENT_DIR" "$TMP_DIR/content"
   mv "$DATA_DIR" "$TMP_DIR/projects"
   mv "$IMAGES_DIR" "$TMP_DIR/images_projects"
   mv "$QR_DIR" "$TMP_DIR/qr"
 
+  # Re-create empty dirs
   mkdir -p "$CONTENT_DIR" "$DATA_DIR" "$IMAGES_DIR" "$QR_DIR"
 
-  # --- CONTENT ---
+  # --- CONTENT: keep only content/<slug>/ ---
   if [ -d "$TMP_DIR/content/$SITE_SLUG" ]; then
     cp -R "$TMP_DIR/content/$SITE_SLUG" "$CONTENT_DIR/$SITE_SLUG"
   else
@@ -54,12 +55,15 @@ if [ -z "$IS_CF_PAGES" ]; then
     exit 1
   fi
 
-  # make selected project homepage
+  # Make selected project the homepage: content/_index.md => builds /
   if [ -f "$CONTENT_DIR/$SITE_SLUG/index.md" ]; then
     cp "$CONTENT_DIR/$SITE_SLUG/index.md" "$CONTENT_DIR/_index.md"
+  else
+    echo "ERROR: content/$SITE_SLUG/index.md not found"
+    exit 1
   fi
 
-  # --- DATA ---
+  # --- DATA: keep only data/projects/<slug>.json ---
   if [ -f "$TMP_DIR/projects/$SITE_SLUG.json" ]; then
     cp "$TMP_DIR/projects/$SITE_SLUG.json" "$DATA_DIR/$SITE_SLUG.json"
   else
@@ -67,14 +71,14 @@ if [ -z "$IS_CF_PAGES" ]; then
     exit 1
   fi
 
-  # --- IMAGES ---
+  # --- IMAGES: keep only static/images/projects/<slug>/ ---
   if [ -d "$TMP_DIR/images_projects/$SITE_SLUG" ]; then
     cp -R "$TMP_DIR/images_projects/$SITE_SLUG" "$IMAGES_DIR/$SITE_SLUG"
   else
-    echo "WARN: images not found for $SITE_SLUG"
+    echo "WARN: images not found for $SITE_SLUG (static/images/projects/$SITE_SLUG)"
   fi
 
-  # --- QR ---
+  # --- QR: keep only static/qr/<slug>-qr.png ---
   QR_FILE="$TMP_DIR/qr/${SITE_SLUG}-qr.png"
   if [ -f "$QR_FILE" ]; then
     cp "$QR_FILE" "$QR_DIR/${SITE_SLUG}-qr.png"
@@ -98,9 +102,12 @@ else
     exit 1
   fi
 
-  # make selected project homepage
+  # Make selected project the homepage: content/_index.md => builds /
   if [ -f "content/$SITE_SLUG/index.md" ]; then
     cp "content/$SITE_SLUG/index.md" "content/_index.md"
+  else
+    echo "ERROR: content/$SITE_SLUG/index.md not found"
+    exit 1
   fi
 
   # data: keep only one json
