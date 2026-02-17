@@ -79,12 +79,13 @@ if [ -z "$IS_CF_PAGES" ]; then
   fi
 
   # --- QR: keep only static/qr/<slug>-qr.png ---
+  # QR OPTIONAL: do not fail build if QR is missing
   QR_FILE="$TMP_DIR/qr/${SITE_SLUG}-qr.png"
   if [ -f "$QR_FILE" ]; then
     cp "$QR_FILE" "$QR_DIR/${SITE_SLUG}-qr.png"
   else
-    echo "ERROR: QR not found: static/qr/${SITE_SLUG}-qr.png"
-    exit 1
+    echo "WARN: QR not found (skipping): static/qr/${SITE_SLUG}-qr.png"
+    # do nothing; QR is optional
   fi
 
 ############################################
@@ -124,15 +125,16 @@ else
   fi
 
   # qr: keep only one file
+  # QR OPTIONAL: do not fail build if folder/file is missing
   if [ -d "static/qr" ]; then
     find static/qr -type f -name "*.png" ! -name "${SITE_SLUG}-qr.png" -delete
     if [ ! -f "static/qr/${SITE_SLUG}-qr.png" ]; then
-      echo "ERROR: static/qr/${SITE_SLUG}-qr.png not found"
-      exit 1
+      echo "WARN: static/qr/${SITE_SLUG}-qr.png not found (continuing without QR)"
+      # do nothing; QR is optional
     fi
   else
-    echo "ERROR: static/qr folder not found"
-    exit 1
+    echo "WARN: static/qr folder not found (continuing without QR)"
+    # do nothing; QR is optional
   fi
 
 fi
