@@ -11,9 +11,8 @@ echo "==> build-one: SITE_SLUG=$SITE_SLUG"
 CONTENT_DIR="$ROOT/content"
 DATA_DIR="$ROOT/data/projects"
 IMAGES_DIR="$ROOT/static/images/projects"
-QR_DIR="$ROOT/static/qr"
 
-# Cloudflare Pages env detection (CF_PAGES is common; CF_PAGES_BRANCH exists too)
+# Cloudflare Pages env detection
 IS_CF_PAGES="${CF_PAGES_BRANCH:-${CF_PAGES:-}}"
 
 TMP_DIR=""
@@ -28,12 +27,11 @@ if [ -z "$IS_CF_PAGES" ]; then
 
   cleanup() {
     echo "==> Restoring backups..."
-    rm -rf "$CONTENT_DIR" "$DATA_DIR" "$IMAGES_DIR" "$QR_DIR"
+    rm -rf "$CONTENT_DIR" "$DATA_DIR" "$IMAGES_DIR"
     mkdir -p "$ROOT/data" "$ROOT/static"
     mv "$TMP_DIR/content" "$CONTENT_DIR" 2>/dev/null || true
     mv "$TMP_DIR/projects" "$DATA_DIR" 2>/dev/null || true
     mv "$TMP_DIR/images_projects" "$IMAGES_DIR" 2>/dev/null || true
-    mv "$TMP_DIR/qr" "$QR_DIR" 2>/dev/null || true
     rm -rf "$TMP_DIR"
   }
   trap cleanup EXIT
@@ -42,12 +40,11 @@ if [ -z "$IS_CF_PAGES" ]; then
   mv "$CONTENT_DIR" "$TMP_DIR/content"
   mv "$DATA_DIR" "$TMP_DIR/projects"
   mv "$IMAGES_DIR" "$TMP_DIR/images_projects"
-  mv "$QR_DIR" "$TMP_DIR/qr"
 
   # Re-create empty dirs
-  mkdir -p "$CONTENT_DIR" "$DATA_DIR" "$IMAGES_DIR" "$QR_DIR"
+  mkdir -p "$CONTENT_DIR" "$DATA_DIR" "$IMAGES_DIR"
 
-  # --- CONTENT: keep only content/<slug>/ ---
+  # --- CONTENT ---
   if [ -d "$TMP_DIR/content/$SITE_SLUG" ]; then
     cp -R "$TMP_DIR/content/$SITE_SLUG" "$CONTENT_DIR/$SITE_SLUG"
   else
@@ -55,7 +52,6 @@ if [ -z "$IS_CF_PAGES" ]; then
     exit 1
   fi
 
-  # Make selected project the homepage: content/_index.md => builds /
   if [ -f "$CONTENT_DIR/$SITE_SLUG/index.md" ]; then
     cp "$CONTENT_DIR/$SITE_SLUG/index.md" "$CONTENT_DIR/_index.md"
   else
@@ -63,7 +59,7 @@ if [ -z "$IS_CF_PAGES" ]; then
     exit 1
   fi
 
-  # --- DATA: keep only data/projects/<slug>.json ---
+  # --- DATA ---
   if [ -f "$TMP_DIR/projects/$SITE_SLUG.json" ]; then
     cp "$TMP_DIR/projects/$SITE_SLUG.json" "$DATA_DIR/$SITE_SLUG.json"
   else
@@ -71,21 +67,11 @@ if [ -z "$IS_CF_PAGES" ]; then
     exit 1
   fi
 
-  # --- IMAGES: keep only static/images/projects/<slug>/ ---
+  # --- IMAGES ---
   if [ -d "$TMP_DIR/images_projects/$SITE_SLUG" ]; then
     cp -R "$TMP_DIR/images_projects/$SITE_SLUG" "$IMAGES_DIR/$SITE_SLUG"
   else
-    echo "WARN: images not found for $SITE_SLUG (static/images/projects/$SITE_SLUG)"
-  fi
-
-  # --- QR: keep only static/qr/<slug>-qr.png ---
-  # QR OPTIONAL: do not fail build if QR is missing
-  QR_FILE="$TMP_DIR/qr/${SITE_SLUG}-qr.png"
-  if [ -f "$QR_FILE" ]; then
-    cp "$QR_FILE" "$QR_DIR/${SITE_SLUG}-qr.png"
-  else
-    echo "WARN: QR not found (skipping): static/qr/${SITE_SLUG}-qr.png"
-    # do nothing; QR is optional
+    echo "WARN: images not found for $SITE_SLUG"
   fi
 
 ############################################
@@ -103,7 +89,7 @@ else
     exit 1
   fi
 
-  # Make selected project the homepage: content/_index.md => builds /
+  # Make selected project the homepage
   if [ -f "content/$SITE_SLUG/index.md" ]; then
     cp "content/$SITE_SLUG/index.md" "content/_index.md"
   else
@@ -122,19 +108,6 @@ else
   # images: keep only one project folder
   if [ -d "static/images/projects" ]; then
     find static/images/projects -mindepth 1 -maxdepth 1 -type d ! -name "$SITE_SLUG" -exec rm -rf {} +
-  fi
-
-  # qr: keep only one file
-  # QR OPTIONAL: do not fail build if folder/file is missing
-  if [ -d "static/qr" ]; then
-    find static/qr -type f -name "*.png" ! -name "${SITE_SLUG}-qr.png" -delete
-    if [ ! -f "static/qr/${SITE_SLUG}-qr.png" ]; then
-      echo "WARN: static/qr/${SITE_SLUG}-qr.png not found (continuing without QR)"
-      # do nothing; QR is optional
-    fi
-  else
-    echo "WARN: static/qr folder not found (continuing without QR)"
-    # do nothing; QR is optional
   fi
 
 fi
