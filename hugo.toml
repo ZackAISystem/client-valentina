@@ -1,8 +1,8 @@
-baseURL = "http://localhost:1317/"
+baseURL = "http://localhost:1320/"
 languageCode = "en-us"
-title = "Iurii Orlov"
+title = "Valentina"
 
 disableKinds = ["taxonomy", "term", "RSS"]
 
 [params]
-  client_name = "Iurii Orlov"
+  client_name = "Valentina"
