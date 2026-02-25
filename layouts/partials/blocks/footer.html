@@ -30,33 +30,13 @@
 {{ if and (eq $subtitle "") (isset $p "project_info_title") }}{{ $subtitle = $p.project_info_title }}{{ end }}
 {{ if eq $subtitle "" }}{{ $subtitle = "Luxury apartments in the heart of Dubai" }}{{ end }}
 
-{{ $powered := "" }}
-{{ with $page.Params.footer_powered_text }}{{ $powered = . }}{{ end }}
-{{ if and (eq $powered "") (isset $p "footer_powered_text") }}{{ $powered = $p.footer_powered_text }}{{ end }}
-{{ if eq $powered "" }}{{ $powered = "Powered by Zack AI" }}{{ end }}
-
-{{ $phone := "" }}
-{{ with $page.Params.footer_phone }}{{ $phone = . }}{{ end }}
-{{ if and (eq $phone "") (isset $p "footer_phone") }}{{ $phone = $p.footer_phone }}{{ end }}
-{{ if eq $phone "" }}{{ $phone = "+7 999 999 99 99" }}{{ end }}
-
-{{/* build tel safely: keep + and digits only */}}
-{{ $tel := replace $phone " " "" }}
-{{ $tel = replace $tel "(" "" }}
-{{ $tel = replace $tel ")" "" }}
-{{ $tel = replace $tel "-" "" }}
-
 {{ $cta := "" }}
 {{ with $page.Params.footer_cta_text }}{{ $cta = . }}{{ end }}
 {{ if and (eq $cta "") (isset $p "footer_cta_text") }}{{ $cta = $p.footer_cta_text }}{{ end }}
 {{ if eq $cta "" }}{{ $cta = "Contact us" }}{{ end }}
 
-{{/* WhatsApp link from client.toml (fallback to #contact) */}}
-{{ $c := site.Data.client }}
+{{/* CTA link: no WhatsApp, always to #contact */}}
 {{ $wa := "#contact" }}
-{{ if and $c (isset $c "whatsapp_link") (ne (trim $c.whatsapp_link " \n\r\t") "") }}
-  {{ $wa = trim $c.whatsapp_link " \n\r\t" }}
-{{ end }}
 
 <footer class="zf-footer {{ $scope }}" id="contacts">
   <div class="zf-footer__inner">
@@ -65,17 +45,11 @@
       <div class="zf-footer__left">
         <div class="zf-footer__brand">{{ $brand }}</div>
         <div class="zf-footer__subtitle">{{ $subtitle }}</div>
-        <div class="zf-footer__powered">{{ $powered }}</div>
       </div>
 
       <div class="zf-footer__right">
         <div class="zf-footer__actions">
-          <a class="zf-footer__pill" href="tel:{{ $tel }}">
-            <span class="zf-footer__pill-icon" aria-hidden="true">☎</span>
-            <span class="zf-footer__pill-text">{{ $phone }}</span>
-          </a>
-
-          <a class="zf-footer__pill" href="{{ $wa }}" target="_blank" rel="noopener">
+          <a class="zf-footer__pill" href="{{ $wa }}">
             <span class="zf-footer__pill-text">{{ $cta }}</span>
           </a>
         </div>

@@ -1,6 +1,6 @@
 {
   "project_name": "Talea",
-  "cta_whatsapp_phone": "971545486278",
+  "cta_whatsapp_phone": "",
   "cta_whatsapp_message": "Hello, I am interested in Talea. Please contact me.",
   "hero_image": "/images/projects/talea/hero.png",
   "intro_image": "/images/projects/talea/intro.png",
@@ -52,9 +52,9 @@
   "contact_form_phone_label": "Phone number",
   "contact_form_cta_text": "Enquire Now",
   "footer_project_name": "Talea",
-  "footer_phone": "+971 54 548 6278",
+  "footer_phone": "",
   "footer_cta_text": "Contact us",
-  "footer_powered_text": "Powered by Zack AI",
+  "footer_powered_text": "",
   "footer_tagline": "Premium waterfront residences in Dubai Maritime City",
-  "whatsapp_url": "https://wa.me/971545486278?text=Hello%2C%20I%20am%20interested%20in%20Talea.%20Please%20contact%20me."
+  "whatsapp_url": ""
 }

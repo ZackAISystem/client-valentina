@@ -83,26 +83,6 @@
 {{ if and (eq $cta "") (isset $p "units_cta_text") }}{{ $cta = $p.units_cta_text }}{{ end }}
 {{ if eq $cta "" }}{{ $cta = "Book a consultation" }}{{ end }}
 
-{{/* WhatsApp from client.toml + message */}}
-{{ $whatsapp := "" }}
-{{ with site.Data.client.whatsapp_link }}{{ $whatsapp = trim . " \n\r\t" }}{{ end }}
-{{ if eq $whatsapp "" }}{{ $whatsapp = "https://wa.me/971567907776" }}{{ end }}
-
-{{ $projectName := "" }}
-{{ if and (isset $p "project_name") $p.project_name }}{{ $projectName = $p.project_name }}{{ end }}
-{{ if and (eq $projectName "") (ne $page.Title "") }}{{ $projectName = $page.Title }}{{ end }}
-
-{{ $whatsappFinal := $whatsapp }}
-{{ if and (in $whatsapp "wa.me") (ne (trim $projectName " \n\r\t") "") }}
-  {{ $msgRaw := printf "Hello, I am interested in %s. Please contact me." $projectName }}
-  {{ $msg := replace ($msgRaw | urlquery) "+" "%20" }}
-  {{ if in $whatsapp "?" }}
-    {{ $whatsappFinal = printf "%s&text=%s" $whatsapp $msg }}
-  {{ else }}
-    {{ $whatsappFinal = printf "%s?text=%s" $whatsapp $msg }}
-  {{ end }}
-{{ end }}
-
 {{ if gt (len $imgs) 0 }}
 <section class="zf-units-gallery {{ $scope }}" id="units" data-units-gallery data-units-scope="{{ $scope }}">
   <div class="zf-units-gallery__header">
@@ -136,7 +116,8 @@
         <span class="zf-units-gallery__stat">{{ $area }}</span>
       </div>
 
-      <a class="zf-units-gallery__cta" href="{{ $whatsappFinal }}" target="_blank" rel="noopener">{{ $cta }}</a>
+      {{/* CTA визуально тот же, но не кликабельный */}}
+      <span class="zf-units-gallery__cta" aria-disabled="true">{{ $cta }}</span>
     </div>
   </div>
 </section>
